@@ -41,7 +41,7 @@ The extension features a modern, professional design with:
 
 ## Developed By
 
-This extension was developed by [Apex Marketing](https://apexmarketing.co.uk), a digital transformation agency specializing in SEO, business automation, and digital solutions.
+This extension was developed by [Apex Marketing](https://apexmarketing.co.uk/seo-analyzer/), a digital transformation agency specializing in SEO, business automation, and digital solutions.
 
 ## License
 
