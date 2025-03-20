@@ -198,6 +198,7 @@
         <div class="tab" data-tab="links">Links</div>
         <div class="tab" data-tab="images">Images</div>
         <div class="tab" data-tab="social">Social</div>
+        <div class="tab" data-tab="schema">Schema</div>
       </div>
       
       <div id="overview" class="tab-content active">
@@ -334,6 +335,18 @@
         <div class="section">
           <div class="section-title"><span class="emoji">🐦</span> <span>Twitter Card</span></div>
           <div id="twitter-data"></div>
+        </div>
+      </div>
+      
+      <div id="schema" class="tab-content">
+        <div class="section">
+          <div class="section-title"><span class="emoji">🔍</span> <span>Schema.org Markup</span></div>
+          <div class="metric">
+            <div class="metric-label">Schema Count</div>
+            <div class="metric-value" id="schema-count">Loading...</div>
+          </div>
+          <button id="copy-schema">Copy Schema JSON</button>
+          <div id="schema-list" style="margin-top: 15px; max-height: 300px; overflow-y: auto;"></div>
         </div>
       </div>
       

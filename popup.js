@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Set up button events
   document.getElementById('copy-headings').addEventListener('click', copyHeadings);
   document.getElementById('export-links').addEventListener('click', exportLinks);
+  document.getElementById('copy-schema').addEventListener('click', copySchema);
   
   // Set up link filter events
   document.getElementById('hide-duplicates').addEventListener('change', filterLinks);
@@ -86,6 +87,91 @@ function getPageData() {
   if (canonicalLink) {
     data.canonical = canonicalLink.href;
   }
+  
+  // Schema.org data extraction
+  data.schema = [];
+  
+  // Method 1: Look for JSON-LD schema
+  const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
+  jsonLdScripts.forEach(script => {
+    try {
+      const jsonContent = JSON.parse(script.textContent);
+      data.schema.push({
+        type: 'JSON-LD',
+        data: jsonContent
+      });
+    } catch (e) {
+      // Invalid JSON, skip
+    }
+  });
+  
+  // Method 2: Look for microdata
+  const itemscopes = document.querySelectorAll('[itemscope]');
+  itemscopes.forEach(item => {
+    try {
+      const itemType = item.getAttribute('itemtype') || 'Unknown Type';
+      const properties = {};
+      
+      const itemprops = item.querySelectorAll('[itemprop]');
+      itemprops.forEach(prop => {
+        const name = prop.getAttribute('itemprop');
+        let value = prop.textContent.trim();
+        
+        // Check for various ways to extract values
+        if (prop.tagName === 'META') {
+          value = prop.getAttribute('content') || '';
+        } else if (prop.tagName === 'IMG') {
+          value = prop.getAttribute('src') || '';
+        } else if (prop.tagName === 'A') {
+          value = prop.getAttribute('href') || prop.textContent.trim();
+        }
+        
+        properties[name] = value;
+      });
+      
+      data.schema.push({
+        type: 'Microdata',
+        itemType: itemType,
+        data: properties
+      });
+    } catch (e) {
+      // Skip errors
+    }
+  });
+  
+  // Method 3: Look for RDFa
+  const rdfaElements = document.querySelectorAll('[typeof]');
+  rdfaElements.forEach(item => {
+    try {
+      const itemType = item.getAttribute('typeof') || 'Unknown Type';
+      const properties = {};
+      
+      const props = item.querySelectorAll('[property]');
+      props.forEach(prop => {
+        const name = prop.getAttribute('property');
+        let value = prop.textContent.trim();
+        
+        // Check for various ways to extract values
+        if (prop.tagName === 'META') {
+          value = prop.getAttribute('content') || '';
+        } else if (prop.tagName === 'IMG') {
+          value = prop.getAttribute('src') || '';
+        } else if (prop.tagName === 'A') {
+          value = prop.getAttribute('href') || prop.textContent.trim();
+        }
+        
+        properties[name] = value;
+      });
+      
+      data.schema.push({
+        type: 'RDFa',
+        itemType: itemType,
+        data: properties
+      });
+    } catch (e) {
+      // Skip errors
+    }
+  });
   
   // Word count
   const bodyText = document.body.innerText || '';
@@ -245,6 +331,52 @@ function displayResults(results) {
       item.innerHTML = `<div class="metric-label">${key}:</div><div class="metric-value">${value}</div>`;
       twitterData.appendChild(item);
     }
+  }
+  
+  // Schema tab
+  document.getElementById('schema-count').textContent = data.schema ? data.schema.length : 0;
+  
+  const schemaList = document.getElementById('schema-list');
+  schemaList.innerHTML = '';
+  
+  if (!data.schema || data.schema.length === 0) {
+    schemaList.innerHTML = '<div class="missing">No Schema.org markup found on this page</div>';
+  } else {
+    // Store schema data globally for copying
+    window.schemaData = data.schema;
+    
+    data.schema.forEach((schema, index) => {
+      const schemaItem = document.createElement('div');
+      schemaItem.className = 'section';
+      schemaItem.style.marginBottom = '15px';
+      
+      let schemaTypeDisplay = schema.type;
+      if (schema.itemType) {
+        schemaTypeDisplay += ` - ${schema.itemType.split('/').pop()}`;
+      } else if (schema.data && schema.data['@type']) {
+        schemaTypeDisplay += ` - ${Array.isArray(schema.data['@type']) ? schema.data['@type'].join(', ') : schema.data['@type']}`;
+      }
+      
+      schemaItem.innerHTML = `<div class="section-title" style="font-size: 14px; margin-bottom: 8px;">${schemaTypeDisplay}</div>`;
+      
+      const schemaContent = document.createElement('pre');
+      schemaContent.style.overflow = 'auto';
+      schemaContent.style.fontSize = '12px';
+      schemaContent.style.backgroundColor = '#f5f5f7';
+      schemaContent.style.padding = '8px';
+      schemaContent.style.borderRadius = '4px';
+      schemaContent.style.marginTop = '5px';
+      schemaContent.style.whiteSpace = 'pre-wrap';
+      
+      try {
+        schemaContent.textContent = JSON.stringify(schema.data, null, 2);
+      } catch (e) {
+        schemaContent.textContent = 'Error parsing schema data';
+      }
+      
+      schemaItem.appendChild(schemaContent);
+      schemaList.appendChild(schemaItem);
+    });
   }
 }
 
@@ -453,4 +585,24 @@ function filterLinks() {
   filteredCount.style.fontStyle = 'italic';
   filteredCount.textContent = `Showing ${links.length} links${hideDuplicates ? ' (duplicates hidden)' : ''}${hideInternal ? ' (internal links hidden)' : ''}`;
   linksList.insertBefore(filteredCount, linksList.firstChild);
+}
+
+function copySchema() {
+  if (!window.schemaData || window.schemaData.length === 0) {
+    alert('No schema data available to copy');
+    return;
+  }
+  
+  try {
+    const schemaJson = JSON.stringify(window.schemaData, null, 2);
+    navigator.clipboard.writeText(schemaJson)
+      .then(() => {
+        alert('Schema data copied to clipboard!');
+      })
+      .catch(err => {
+        console.error('Could not copy text: ', err);
+      });
+  } catch (e) {
+    alert('Error processing schema data: ' + e.message);
+  }
 }
