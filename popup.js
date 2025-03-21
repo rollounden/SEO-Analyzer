@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('export-links').addEventListener('click', exportLinks);
   document.getElementById('copy-schema').addEventListener('click', copySchema);
   document.getElementById('copy-image-links').addEventListener('click', copyImageLinks);
+  document.getElementById('copy-hreflang').addEventListener('click', copyHreflang);
+  document.getElementById('export-all').addEventListener('click', exportAllSeoData);
   
   // Set up link filter events
   document.getElementById('hide-duplicates').addEventListener('change', filterLinks);
@@ -34,6 +36,23 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('agency-link').addEventListener('click', function(e) {
     e.preventDefault();
     chrome.tabs.create({ url: 'https://apexmarketing.co.uk' });
+  });
+
+  // Set up robots.txt and sitemap.xml buttons
+  document.getElementById('view-robots').addEventListener('click', function() {
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      const url = new URL(tabs[0].url);
+      const robotsUrl = `${url.protocol}//${url.hostname}/robots.txt`;
+      chrome.tabs.create({ url: robotsUrl });
+    });
+  });
+
+  document.getElementById('view-sitemap').addEventListener('click', function() {
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      const url = new URL(tabs[0].url);
+      const sitemapUrl = `${url.protocol}//${url.hostname}/sitemap.xml`;
+      chrome.tabs.create({ url: sitemapUrl });
+    });
   });
 });
 
@@ -240,6 +259,47 @@ function getPageData() {
     });
   });
   
+  // Add hreflang data collection
+  data.hreflang = [];
+  const hreflangTags = document.querySelectorAll('link[rel="alternate"][hreflang]');
+  hreflangTags.forEach(tag => {
+    data.hreflang.push({
+      lang: tag.getAttribute('hreflang'),
+      href: tag.getAttribute('href')
+    });
+  });
+
+  // Also check meta tags for hreflang (some sites use meta)
+  const metaHreflang = document.querySelectorAll('meta[name="alternate"][hreflang]');
+  metaHreflang.forEach(tag => {
+    data.hreflang.push({
+      lang: tag.getAttribute('hreflang'),
+      href: tag.getAttribute('content')
+    });
+  });
+  
+  // Add page content collection
+  data.content = {
+    mainContent: '',
+    articleContent: '',
+    paragraphs: []
+  };
+
+  // Try to get main content from article or main tags
+  const article = document.querySelector('article');
+  const main = document.querySelector('main');
+  
+  if (article) {
+    data.content.articleContent = article.innerText.trim();
+  }
+  if (main) {
+    data.content.mainContent = main.innerText.trim();
+  }
+
+  // Get all paragraphs
+  const paragraphs = document.querySelectorAll('p');
+  data.content.paragraphs = Array.from(paragraphs).map(p => p.innerText.trim()).filter(text => text.length > 0);
+  
   return data;
 }
 
@@ -380,6 +440,26 @@ function displayResults(results) {
       
       schemaItem.appendChild(schemaContent);
       schemaList.appendChild(schemaItem);
+    });
+  }
+
+  // Hreflang tab
+  document.getElementById('hreflang-count').textContent = data.hreflang.length;
+  
+  const hreflangList = document.getElementById('hreflang-list');
+  hreflangList.innerHTML = '';
+  
+  if (data.hreflang.length === 0) {
+    hreflangList.innerHTML = '<div class="missing">No hreflang tags found</div>';
+  } else {
+    data.hreflang.forEach(tag => {
+      const hreflangItem = document.createElement('div');
+      hreflangItem.className = 'link-item';
+      hreflangItem.innerHTML = `
+        <div><strong>Language:</strong> ${tag.lang}</div>
+        <div><strong>URL:</strong> ${tag.href}</div>
+      `;
+      hreflangList.appendChild(hreflangItem);
     });
   }
 }
@@ -637,5 +717,167 @@ function copyImageLinks() {
       });
   } catch (e) {
     alert('Error processing image data: ' + e.message);
+  }
+}
+
+function copyHreflang() {
+  if (!window.pageData || !window.pageData.hreflang || window.pageData.hreflang.length === 0) {
+    alert('No hreflang data available to copy');
+    return;
+  }
+
+  try {
+    // Create CSV header
+    let hreflangText = 'Language,URL\n';
+    
+    // Add each hreflang as a CSV row
+    window.pageData.hreflang.forEach(tag => {
+      const lang = tag.lang.replace(/"/g, '""');
+      const href = tag.href.replace(/"/g, '""');
+      hreflangText += `"${lang}","${href}"\n`;
+    });
+
+    navigator.clipboard.writeText(hreflangText)
+      .then(() => {
+        alert('Hreflang data copied to clipboard in CSV format!');
+      })
+      .catch(err => {
+        console.error('Could not copy text: ', err);
+      });
+  } catch (e) {
+    alert('Error processing hreflang data: ' + e.message);
+  }
+}
+
+function exportAllSeoData() {
+  if (!window.pageData) {
+    alert('No page data available to export');
+    return;
+  }
+
+  try {
+    const data = window.pageData;
+    let csvContent = '';
+
+    // Get page name from URL for the filename
+    const pageUrl = new URL(data.url);
+    const pageName = pageUrl.hostname.replace(/[^a-z0-9]/gi, '_');
+
+    // Basic SEO Data
+    csvContent += 'PAGE SEO METRICS AND META INFORMATION\n';
+    csvContent += 'Metric,Value\n';
+    csvContent += `Title,\"${data.title.replace(/"/g, '""')}\"\n`;
+    csvContent += `Title Length,${data.title.length}\n`;
+    csvContent += `Description,\"${(data.description || '').replace(/"/g, '""')}\"\n`;
+    csvContent += `Description Length,${data.description ? data.description.length : 0}\n`;
+    csvContent += `URL,\"${data.url}\"\n`;
+    csvContent += `Language,\"${data.lang}\"\n`;
+    csvContent += `Canonical URL,\"${data.canonical || ''}\"\n`;
+    csvContent += `Robots Directive,\"${data.robots || ''}\"\n`;
+    csvContent += `Meta Keywords,\"${(data.keywords || '').replace(/"/g, '""')}\"\n`;
+    csvContent += `Total Word Count,${data.wordCount}\n\n`;
+
+    // Add content section after meta information and before headings
+    csvContent += '\nPAGE CONTENT ANALYSIS\n';
+    
+    // Main content if found
+    if (data.content.mainContent) {
+      csvContent += 'MAIN TAG CONTENT\n';
+      csvContent += 'Content\n';
+      csvContent += `\"${data.content.mainContent.replace(/"/g, '""')}\"\n\n`;
+    }
+
+    // Article content if found
+    if (data.content.articleContent) {
+      csvContent += 'ARTICLE TAG CONTENT\n';
+      csvContent += 'Content\n';
+      csvContent += `\"${data.content.articleContent.replace(/"/g, '""')}\"\n\n`;
+    }
+
+    // Paragraphs
+    csvContent += 'PARAGRAPH CONTENT\n';
+    csvContent += 'Paragraph Number,Content\n';
+    data.content.paragraphs.forEach((paragraph, index) => {
+      if (paragraph.trim()) {
+        csvContent += `${index + 1},\"${paragraph.replace(/"/g, '""')}\"\n`;
+      }
+    });
+    csvContent += '\n';
+
+    // Headings
+    csvContent += 'PAGE HEADING STRUCTURE AND HIERARCHY\n';
+    csvContent += 'Heading Type,Total Count,Heading Text\n';
+    for (let i = 1; i <= 6; i++) {
+      const headings = data.headings[`h${i}`];
+      if (headings.count > 0) {
+        headings.items.forEach(heading => {
+          csvContent += `H${i},${headings.count},\"${heading.replace(/"/g, '""')}\"\n`;
+        });
+      }
+    }
+    csvContent += '\n';
+
+    // Links
+    csvContent += 'PAGE LINK ANALYSIS AND DISTRIBUTION\n';
+    csvContent += 'Link Category,Link Text,Destination URL\n';
+    data.links.items.forEach(link => {
+      csvContent += `${link.isInternal ? 'Internal' : 'External'},\"${link.anchor.replace(/"/g, '""')}\",\"${link.url}\"\n`;
+    });
+    csvContent += '\n';
+
+    // Images
+    csvContent += 'IMAGE ACCESSIBILITY AND SOURCE ANALYSIS\n';
+    csvContent += 'Image Source URL,Alternative Text\n';
+    data.images.items.forEach(image => {
+      csvContent += `\"${image.src}\",\"${(image.alt || 'Missing Alt Text').replace(/"/g, '""')}\"\n`;
+    });
+    csvContent += '\n';
+
+    // Open Graph
+    csvContent += 'SOCIAL MEDIA - OPEN GRAPH META TAGS\n';
+    csvContent += 'OG Property,Content Value\n';
+    for (const [key, value] of Object.entries(data.ogData)) {
+      csvContent += `\"${key}\",\"${value.replace(/"/g, '""')}\"\n`;
+    }
+    csvContent += '\n';
+
+    // Twitter Cards
+    csvContent += 'SOCIAL MEDIA - TWITTER CARD META TAGS\n';
+    csvContent += 'Twitter Property,Content Value\n';
+    for (const [key, value] of Object.entries(data.twitterData)) {
+      csvContent += `\"${key}\",\"${value.replace(/"/g, '""')}\"\n`;
+    }
+    csvContent += '\n';
+
+    // Schema
+    csvContent += 'STRUCTURED DATA - SCHEMA.ORG MARKUP\n';
+    csvContent += 'Schema Type,Schema Data\n';
+    data.schema.forEach(schema => {
+      csvContent += `\"${schema.type}${schema.itemType ? ' - ' + schema.itemType : ''}\",\"${JSON.stringify(schema.data).replace(/"/g, '""')}\"\n`;
+    });
+    csvContent += '\n';
+
+    // Hreflang
+    csvContent += 'INTERNATIONAL - HREFLANG TAG IMPLEMENTATION\n';
+    csvContent += 'Target Language/Region,Localized URL\n';
+    data.hreflang.forEach(tag => {
+      csvContent += `\"${tag.lang}\",\"${tag.href}\"\n`;
+    });
+
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    const date = new Date().toISOString().split('T')[0];
+    link.setAttribute('download', `seo_analysis_${pageName}_${date}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+  } catch (e) {
+    console.error('Error exporting data:', e);
+    alert('Error creating export file: ' + e.message);
   }
 }
