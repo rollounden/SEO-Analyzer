@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SEO Page Analyzer by Apex Marketing",
-  "version": "1.0",
+  "version": "1.2",
   "description": "Analyze SEO metrics for any webpage",
   "action": {
     "default_popup": "popup.html",

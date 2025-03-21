@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('copy-headings').addEventListener('click', copyHeadings);
   document.getElementById('export-links').addEventListener('click', exportLinks);
   document.getElementById('copy-schema').addEventListener('click', copySchema);
+  document.getElementById('copy-image-links').addEventListener('click', copyImageLinks);
   
   // Set up link filter events
   document.getElementById('hide-duplicates').addEventListener('change', filterLinks);
@@ -246,6 +247,9 @@ function displayResults(results) {
   if (!results || !results[0] || !results[0].result) return;
   
   const data = results[0].result;
+  
+  // Store the data globally for the copy function to use
+  window.pageData = data;
   
   // Overview tab
   document.getElementById('title-length').textContent = `${data.title.length} characters | ${data.title}`;
@@ -604,5 +608,34 @@ function copySchema() {
       });
   } catch (e) {
     alert('Error processing schema data: ' + e.message);
+  }
+}
+
+function copyImageLinks() {
+  if (!window.pageData || !window.pageData.images) {
+    alert('No image data available to copy');
+    return;
+  }
+
+  try {
+    const images = window.pageData.images.items;
+    // Create CSV header
+    let imageText = 'Image URL,Alt Text\n';
+    
+    // Add each image as a CSV row, properly escaping commas and quotes in alt text
+    images.forEach(image => {
+      const altText = (image.alt || 'Missing').replace(/"/g, '""'); // Escape quotes by doubling them
+      imageText += `"${image.src}","${altText}"\n`;
+    });
+
+    navigator.clipboard.writeText(imageText)
+      .then(() => {
+        alert('Image links copied to clipboard in CSV format!');
+      })
+      .catch(err => {
+        console.error('Could not copy text: ', err);
+      });
+  } catch (e) {
+    alert('Error processing image data: ' + e.message);
   }
 }
