@@ -38,9 +38,15 @@ document.addEventListener('DOMContentLoaded', function() {
   // Set up agency link
   document.getElementById('agency-link').addEventListener('click', function(e) {
     e.preventDefault();
-    chrome.tabs.create({ url: 'https://apexmarketing.co.uk' });
+    chrome.tabs.create({ url: 'https://apexmarketing.co.uk/tools/' });
   });
   
+  // Set up services link
+  document.getElementById('services-link').addEventListener('click', function(e) {
+    e.preventDefault();
+    chrome.tabs.create({ url: 'https://app.apexmarketing.co.uk/' });
+  });
+
   // Set up robots.txt and sitemap.xml buttons
   document.getElementById('view-robots').addEventListener('click', function() {
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
