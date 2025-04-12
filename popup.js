@@ -32,7 +32,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Set up link filter events
   document.getElementById('hide-duplicates').addEventListener('change', filterLinks);
   document.getElementById('hide-internal').addEventListener('change', filterLinks);
+  document.getElementById('hide-external').addEventListener('change', filterLinks);
   document.getElementById('group-domains').addEventListener('change', filterLinks);
+  document.getElementById('show-follow').addEventListener('change', filterLinks);
+  document.getElementById('show-nofollow').addEventListener('change', filterLinks);
   document.getElementById('show-full-list').addEventListener('change', filterLinks);
   
   // Set up agency link
@@ -224,6 +227,8 @@ function getPageData() {
     total: allLinks.length,
     internal: 0,
     external: 0,
+    follow: 0,
+    nofollow: 0,
     items: []
   };
   
@@ -232,16 +237,27 @@ function getPageData() {
     const anchor = link.innerText.trim() || 'No anchor text';
     const isInternal = href.includes(currentDomain) || href.startsWith('/');
     
+    // Check for nofollow attribute
+    const relAttribute = link.getAttribute('rel') || '';
+    const isNofollow = relAttribute.toLowerCase().includes('nofollow');
+    
     data.links.items.push({
       url: href,
       anchor: anchor,
-      isInternal: isInternal
+      isInternal: isInternal,
+      isNofollow: isNofollow
     });
     
     if (isInternal) {
       data.links.internal++;
     } else if (href.startsWith('http')) {
       data.links.external++;
+    }
+    
+    if (isNofollow) {
+      data.links.nofollow++;
+    } else {
+      data.links.follow++;
     }
   });
   
@@ -798,6 +814,28 @@ function displayResults(results) {
   document.getElementById('internal-links').textContent = data.links.internal;
   document.getElementById('external-links').textContent = data.links.external;
 
+  // Add follow/nofollow counts to the display
+  if (!document.getElementById('follow-links')) {
+    // Add these elements if they don't exist yet
+    const linksSection = document.querySelector('#links .section');
+    const externalLinksMetric = document.getElementById('external-links').closest('.metric');
+    
+    const followMetric = document.createElement('div');
+    followMetric.className = 'metric';
+    followMetric.innerHTML = `<div class="metric-label">DoFollow Links</div><div class="metric-value" id="follow-links">${data.links.follow}</div>`;
+    
+    const nofollowMetric = document.createElement('div');
+    nofollowMetric.className = 'metric';
+    nofollowMetric.innerHTML = `<div class="metric-label">Nofollow Links</div><div class="metric-value" id="nofollow-links">${data.links.nofollow}</div>`;
+    
+    linksSection.insertBefore(nofollowMetric, externalLinksMetric.nextSibling);
+    linksSection.insertBefore(followMetric, externalLinksMetric.nextSibling);
+  } else {
+    // Update existing elements
+    document.getElementById('follow-links').textContent = data.links.follow;
+    document.getElementById('nofollow-links').textContent = data.links.nofollow;
+  }
+
   // Store links data globally for filtering
   window.linksData = data.links;
 
@@ -991,12 +1029,26 @@ function exportLinks() {
     // Get filter states
     const hideDuplicates = document.getElementById('hide-duplicates').checked;
     const hideInternal = document.getElementById('hide-internal').checked;
+    const hideExternal = document.getElementById('hide-external').checked;
+    const showFollow = document.getElementById('show-follow').checked;
+    const showNofollow = document.getElementById('show-nofollow').checked;
     
     let links = [...window.linksData.items];
     
     // Apply filters
     if (hideInternal) {
       links = links.filter(link => !link.isInternal);
+    }
+    
+    if (hideExternal) {
+      links = links.filter(link => link.isInternal);
+    }
+    
+    // Filter by follow/nofollow status
+    if (showFollow && !showNofollow) {
+      links = links.filter(link => !link.isNofollow);
+    } else if (!showFollow && showNofollow) {
+      links = links.filter(link => link.isNofollow);
     }
     
     // Handle duplicates
@@ -1012,10 +1064,12 @@ function exportLinks() {
     }
     
     // Create CSV with filtered links
-    let csv = 'Type,Anchor,URL\n';
+    let csv = 'Type,Follow Status,Anchor,URL\n';
     links.forEach(link => {
       const anchor = link.anchor.replace(/,/g, ' ') || 'No anchor text';
-      csv += `${link.isInternal ? 'Internal' : 'External'},"${anchor}","${link.url}"\n`;
+      const linkType = link.isInternal ? 'Internal' : 'External';
+      const followStatus = link.isNofollow ? 'NoFollow' : 'DoFollow';
+      csv += `${linkType},${followStatus},"${anchor}","${link.url}"\n`;
     });
     
     // Download the CSV
@@ -1038,14 +1092,19 @@ function exportLinks() {
       function: function() {
         const allLinks = document.querySelectorAll('a');
         const currentDomain = window.location.hostname;
-        let csv = 'Type,Anchor,URL\n';
+        let csv = 'Type,Follow Status,Anchor,URL\n';
         
         allLinks.forEach(link => {
           const href = link.href || '';
           const anchor = link.innerText.trim().replace(/,/g, ' ') || 'No anchor text';
           const isInternal = href.includes(currentDomain) || href.startsWith('/');
+          const relAttribute = link.getAttribute('rel') || '';
+          const isNofollow = relAttribute.toLowerCase().includes('nofollow');
           
-          csv += `${isInternal ? 'Internal' : 'External'},"${anchor}","${href}"\n`;
+          const linkType = isInternal ? 'Internal' : 'External';
+          const followStatus = isNofollow ? 'NoFollow' : 'DoFollow';
+          
+          csv += `${linkType},${followStatus},"${anchor}","${href}"\n`;
         });
         
         return csv;
@@ -1075,7 +1134,10 @@ function filterLinks() {
   // Get filter states
   const hideDuplicates = document.getElementById('hide-duplicates').checked;
   const hideInternal = document.getElementById('hide-internal').checked;
+  const hideExternal = document.getElementById('hide-external').checked;
   const groupDomains = document.getElementById('group-domains').checked;
+  const showFollow = document.getElementById('show-follow').checked;
+  const showNofollow = document.getElementById('show-nofollow').checked;
   const showFullList = document.getElementById('show-full-list').checked;
   
   let links = [...window.linksData.items];
@@ -1083,6 +1145,19 @@ function filterLinks() {
   // Apply filters
   if (hideInternal) {
     links = links.filter(link => !link.isInternal);
+  }
+  
+  if (hideExternal) {
+    links = links.filter(link => link.isInternal);
+  }
+  
+  // Filter by follow/nofollow status
+  if (showFollow && !showNofollow) {
+    links = links.filter(link => !link.isNofollow);
+  } else if (!showFollow && showNofollow) {
+    links = links.filter(link => link.isNofollow);
+  } else if (!showFollow && !showNofollow) {
+    // If both are unchecked, show all (same as both checked)
   }
   
   // Handle duplicates
@@ -1134,8 +1209,29 @@ function filterLinks() {
         domainLinks.forEach(link => {
           const linkItem = document.createElement('div');
           linkItem.className = 'link-item';
-          linkItem.innerHTML = `<div><strong>${link.isInternal ? 'Internal' : 'External'}:</strong> ${link.anchor}</div>
-                               <div>${link.url}</div>`;
+          
+          // Get link type and CSS class
+          let typeText = '';
+          let typeClass = '';
+          
+          if (link.isInternal && !link.isNofollow) {
+            typeText = 'Internal / DoFollow';
+            typeClass = 'internal-dofollow';
+          } else if (link.isInternal && link.isNofollow) {
+            typeText = 'Internal / NoFollow';
+            typeClass = 'internal-nofollow';
+          } else if (!link.isInternal && !link.isNofollow) {
+            typeText = 'External / DoFollow';
+            typeClass = 'external-dofollow';
+          } else {
+            typeText = 'External / NoFollow';
+            typeClass = 'external-nofollow';
+          }
+          
+          linkItem.innerHTML = `
+            <div><span class="link-type ${typeClass}">${typeText}</span> <strong>${link.anchor}</strong></div>
+            <div>${link.url}</div>
+          `;
           linksList.appendChild(linkItem);
         });
       }
@@ -1145,8 +1241,29 @@ function filterLinks() {
     links.forEach(link => {
       const linkItem = document.createElement('div');
       linkItem.className = 'link-item';
-      linkItem.innerHTML = `<div><strong>${link.isInternal ? 'Internal' : 'External'}:</strong> ${link.anchor}</div>
-                           <div>${link.url}</div>`;
+      
+      // Get link type and CSS class
+      let typeText = '';
+      let typeClass = '';
+      
+      if (link.isInternal && !link.isNofollow) {
+        typeText = 'Internal / DoFollow';
+        typeClass = 'internal-dofollow';
+      } else if (link.isInternal && link.isNofollow) {
+        typeText = 'Internal / NoFollow';
+        typeClass = 'internal-nofollow';
+      } else if (!link.isInternal && !link.isNofollow) {
+        typeText = 'External / DoFollow';
+        typeClass = 'external-dofollow';
+      } else {
+        typeText = 'External / NoFollow';
+        typeClass = 'external-nofollow';
+      }
+      
+      linkItem.innerHTML = `
+        <div><span class="link-type ${typeClass}">${typeText}</span> <strong>${link.anchor}</strong></div>
+        <div>${link.url}</div>
+      `;
       linksList.appendChild(linkItem);
     });
   }
@@ -1156,7 +1273,15 @@ function filterLinks() {
   filteredCount.style.marginBottom = '10px';
   filteredCount.style.fontSize = '13px';
   filteredCount.style.fontStyle = 'italic';
-  filteredCount.textContent = `Showing ${links.length} links${hideDuplicates ? ' (duplicates hidden)' : ''}${hideInternal ? ' (internal links hidden)' : ''}`;
+  
+  let filterDescription = `Showing ${links.length} links`;
+  if (hideDuplicates) filterDescription += ' (duplicates hidden)';
+  if (hideInternal) filterDescription += ' (internal links hidden)';
+  if (hideExternal) filterDescription += ' (external links hidden)';
+  if (showFollow && !showNofollow) filterDescription += ' (dofollow links only)';
+  if (!showFollow && showNofollow) filterDescription += ' (nofollow links only)';
+  
+  filteredCount.textContent = filterDescription;
   linksList.insertBefore(filteredCount, linksList.firstChild);
 }
 
@@ -1423,12 +1548,26 @@ function copyLinks() {
     // Get filter states
     const hideDuplicates = document.getElementById('hide-duplicates').checked;
     const hideInternal = document.getElementById('hide-internal').checked;
+    const hideExternal = document.getElementById('hide-external').checked;
+    const showFollow = document.getElementById('show-follow').checked;
+    const showNofollow = document.getElementById('show-nofollow').checked;
     
     let links = [...window.linksData.items];
     
     // Apply filters
     if (hideInternal) {
       links = links.filter(link => !link.isInternal);
+    }
+    
+    if (hideExternal) {
+      links = links.filter(link => link.isInternal);
+    }
+    
+    // Filter by follow/nofollow status
+    if (showFollow && !showNofollow) {
+      links = links.filter(link => !link.isNofollow);
+    } else if (!showFollow && showNofollow) {
+      links = links.filter(link => link.isNofollow);
     }
     
     // Handle duplicates
@@ -1444,11 +1583,13 @@ function copyLinks() {
     }
     
     // Create text with filtered links
-    let linksText = 'Type | Anchor | URL\n';
-    linksText += '-----|--------|-----\n';
+    let linksText = 'Type | Follow Status | Anchor | URL\n';
+    linksText += '-----|--------------|--------|-----\n';
     links.forEach(link => {
       const anchor = link.anchor.replace(/\|/g, ' ') || 'No anchor text';
-      linksText += `${link.isInternal ? 'Internal' : 'External'} | ${anchor} | ${link.url}\n`;
+      const linkType = link.isInternal ? 'Internal' : 'External';
+      const followStatus = link.isNofollow ? 'NoFollow' : 'DoFollow';
+      linksText += `${linkType} | ${followStatus} | ${anchor} | ${link.url}\n`;
     });
     
     // Copy to clipboard
@@ -1469,15 +1610,20 @@ function copyLinks() {
       function: function() {
         const allLinks = document.querySelectorAll('a');
         const currentDomain = window.location.hostname;
-        let linksText = 'Type | Anchor | URL\n';
-        linksText += '-----|--------|-----\n';
+        let linksText = 'Type | Follow Status | Anchor | URL\n';
+        linksText += '-----|--------------|--------|-----\n';
         
         allLinks.forEach(link => {
           const href = link.href || '';
           const anchor = link.innerText.trim().replace(/\|/g, ' ') || 'No anchor text';
           const isInternal = href.includes(currentDomain) || href.startsWith('/');
+          const relAttribute = link.getAttribute('rel') || '';
+          const isNofollow = relAttribute.toLowerCase().includes('nofollow');
           
-          linksText += `${isInternal ? 'Internal' : 'External'} | ${anchor} | ${href}\n`;
+          const linkType = isInternal ? 'Internal' : 'External';
+          const followStatus = isNofollow ? 'NoFollow' : 'DoFollow';
+          
+          linksText += `${linkType} | ${followStatus} | ${anchor} | ${href}\n`;
         });
         
         return linksText;

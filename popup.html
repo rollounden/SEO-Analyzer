@@ -210,6 +210,32 @@
       word-break: break-all;
       max-width: 100%;
     }
+    
+    /* Link type styling */
+    .link-type {
+      font-weight: 700;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      display: inline-block;
+      margin-right: 5px;
+    }
+    .internal-dofollow {
+      background-color: #4caf50;
+      color: white;
+    }
+    .internal-nofollow {
+      background-color: #ffc107;
+      color: #333;
+    }
+    .external-dofollow {
+      background-color: #2196f3;
+      color: white;
+    }
+    .external-nofollow {
+      background-color: #ff5722;
+      color: white;
+    }
   </style>
   <script src="popup.js"></script>
 </head>
@@ -329,8 +355,22 @@
                 <span>Hide Internal Links</span>
               </label>
               <label class="filter-option">
+                <input type="checkbox" id="hide-external"> 
+                <span>Hide External Links</span>
+              </label>
+              <label class="filter-option">
                 <input type="checkbox" id="group-domains"> 
                 <span>Group by Domain</span>
+              </label>
+            </div>
+            <div class="filter-checkboxes" style="margin-top: 8px;">
+              <label class="filter-option">
+                <input type="checkbox" id="show-follow"> 
+                <span>DoFollow Links</span>
+              </label>
+              <label class="filter-option">
+                <input type="checkbox" id="show-nofollow"> 
+                <span>Nofollow Links</span>
               </label>
               <label class="filter-option">
                 <input type="checkbox" id="show-full-list" checked> 
