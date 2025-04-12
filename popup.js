@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Set up button events
   document.getElementById('copy-headings').addEventListener('click', copyHeadings);
   document.getElementById('export-links').addEventListener('click', exportLinks);
+  document.getElementById('copy-links').addEventListener('click', copyLinks);
   document.getElementById('copy-schema').addEventListener('click', copySchema);
   document.getElementById('copy-image-links').addEventListener('click', copyImageLinks);
   document.getElementById('copy-hreflang').addEventListener('click', copyHreflang);
@@ -1408,4 +1409,83 @@ function copyMapCode() {
     .catch(err => {
       console.error('Could not copy text: ', err);
     });
+}
+
+function copyLinks() {
+  // If we have the links data in memory, use it with current filters
+  if (window.linksData) {
+    // Get filter states
+    const hideDuplicates = document.getElementById('hide-duplicates').checked;
+    const hideInternal = document.getElementById('hide-internal').checked;
+    
+    let links = [...window.linksData.items];
+    
+    // Apply filters
+    if (hideInternal) {
+      links = links.filter(link => !link.isInternal);
+    }
+    
+    // Handle duplicates
+    if (hideDuplicates) {
+      const uniqueUrls = new Set();
+      links = links.filter(link => {
+        if (uniqueUrls.has(link.url)) {
+          return false;
+        }
+        uniqueUrls.add(link.url);
+        return true;
+      });
+    }
+    
+    // Create text with filtered links
+    let linksText = 'Type | Anchor | URL\n';
+    linksText += '-----|--------|-----\n';
+    links.forEach(link => {
+      const anchor = link.anchor.replace(/\|/g, ' ') || 'No anchor text';
+      linksText += `${link.isInternal ? 'Internal' : 'External'} | ${anchor} | ${link.url}\n`;
+    });
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(linksText)
+      .then(() => {
+        alert('Links copied to clipboard!');
+      })
+      .catch(err => {
+        console.error('Could not copy text: ', err);
+      });
+    return;
+  }
+  
+  // Fallback to direct DOM query if we don't have the data in memory
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    chrome.scripting.executeScript({
+      target: {tabId: tabs[0].id},
+      function: function() {
+        const allLinks = document.querySelectorAll('a');
+        const currentDomain = window.location.hostname;
+        let linksText = 'Type | Anchor | URL\n';
+        linksText += '-----|--------|-----\n';
+        
+        allLinks.forEach(link => {
+          const href = link.href || '';
+          const anchor = link.innerText.trim().replace(/\|/g, ' ') || 'No anchor text';
+          const isInternal = href.includes(currentDomain) || href.startsWith('/');
+          
+          linksText += `${isInternal ? 'Internal' : 'External'} | ${anchor} | ${href}\n`;
+        });
+        
+        return linksText;
+      }
+    }, function(results) {
+      if (results && results[0] && results[0].result) {
+        navigator.clipboard.writeText(results[0].result)
+          .then(() => {
+            alert('Links copied to clipboard!');
+          })
+          .catch(err => {
+            console.error('Could not copy text: ', err);
+          });
+      }
+    });
+  });
 }
