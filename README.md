@@ -1,6 +1,6 @@
 # SEO Page Analyzer by Apex Marketing
 
-A Chrome extension that analyzes and displays key SEO metrics from any webpage, including meta tags, headings, links, images, and social media tags.
+A Chrome extension that analyzes and displays key SEO metrics from any webpage, including meta tags, headings, links, images, social media tags, and local business information.
 
 ## Features
 
@@ -13,6 +13,13 @@ A Chrome extension that analyzes and displays key SEO metrics from any webpage, 
   - Show full list or summary view
 - **Images Analysis**: Checks for missing alt text
 - **Social Tags**: Displays Open Graph and Twitter Card data
+- **Schema Analysis**: Examines structured data on the page
+- **Hreflang**: Detects international targeting tags
+- **Local Business**: Extracts and displays business information including:
+  - Business name, address and phone number
+  - Categories and ratings
+  - Coordinates and map embed code
+  - Citation resource links
 
 ## Installation
 
@@ -30,6 +37,7 @@ A Chrome extension that analyzes and displays key SEO metrics from any webpage, 
 4. Use the tabs to navigate between different analysis sections
 5. Use the filtering options in the Links tab to customize your view
 6. Export data using the provided buttons
+7. In the Local tab, easily copy business information and map embed codes
 
 ## Design
 
@@ -38,6 +46,7 @@ The extension features a modern, professional design with:
 - Clean white content areas
 - Orange (#ff6b00) buttons and interactive elements
 - Responsive layout with clear section organization
+- Larger popup size (580px width) for better readability
 
 ## Developed By
 

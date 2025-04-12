@@ -6,7 +6,7 @@
   <style>
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
-      width: 480px;
+      width: 580px;
       padding: 0;
       margin: 0;
       background-color: #f5f5f7;
@@ -75,6 +75,9 @@
     .metric-value {
       color: #141c2a;
       font-weight: 500;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      max-width: 70%;
     }
     .missing {
       color: #e53935;
@@ -200,6 +203,13 @@
     .footer-button:hover {
       background-color: #2c3e50;
     }
+    
+    /* Specific styles for URLs to prevent overflow */
+    #url, #canonical {
+      font-size: 13px;
+      word-break: break-all;
+      max-width: 100%;
+    }
   </style>
   <script src="popup.js"></script>
 </head>
@@ -218,6 +228,7 @@
         <div class="tab" data-tab="social">Social</div>
         <div class="tab" data-tab="schema">Schema</div>
         <div class="tab" data-tab="hreflang">Hreflang</div>
+        <div class="tab" data-tab="local">Local</div>
       </div>
       
       <div id="overview" class="tab-content active">
@@ -380,6 +391,56 @@
           </div>
           <button id="copy-hreflang">Copy Hreflang Data</button>
           <div id="hreflang-list" style="margin-top: 15px; max-height: 300px; overflow-y: auto;"></div>
+        </div>
+      </div>
+      
+      <div id="local" class="tab-content">
+        <div class="section">
+          <div class="section-title"><span class="emoji">🏢</span> <span>Business Information</span></div>
+          <div class="header-actions" style="text-align: right; margin-top: -30px;">
+            <button id="copy-business-info" class="footer-button" style="font-size: 12px;">Copy All</button>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Business Name:</div>
+            <div class="metric-value" id="business-name">Loading...</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Categories:</div>
+            <div class="metric-value" id="business-categories">Loading...</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Address:</div>
+            <div class="metric-value" id="business-address">Loading...</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Phone Number:</div>
+            <div class="metric-value" id="business-phone">Loading...</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Website:</div>
+            <div class="metric-value" id="business-website">Loading...</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Reviews:</div>
+            <div class="metric-value" id="business-reviews">Loading...</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Rating:</div>
+            <div class="metric-value" id="business-rating">Loading...</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Coordinates:</div>
+            <div class="metric-value" id="business-coordinates">Loading...</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">KG ID:</div>
+            <div class="metric-value" id="kg-id">Loading...</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Map Embed Code:</div>
+            <div class="metric-value" id="map-embed">Loading...</div>
+          </div>
+          <button id="copy-map-code">Copy Map Code</button>
         </div>
       </div>
       
