@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SEO Insights by Apex Marketing",
-  "version": "1.45",
+  "version": "1.5",
   "description": "Analyze SEO metrics and local business information for any webpage",
   "action": {
     "default_popup": "popup.html",
