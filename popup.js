@@ -37,7 +37,9 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('group-domains').addEventListener('change', filterLinks);
   document.getElementById('show-follow').addEventListener('change', filterLinks);
   document.getElementById('show-nofollow').addEventListener('change', filterLinks);
+  document.getElementById('link-search').addEventListener('input', filterLinks);
   document.getElementById('show-full-list').addEventListener('change', filterLinks);
+  
   
   // Set up agency link
   document.getElementById('agency-link').addEventListener('click', function(e) {
@@ -1144,6 +1146,7 @@ function filterLinks() {
   const showFollow = document.getElementById('show-follow').checked;
   const showNofollow = document.getElementById('show-nofollow').checked;
   const showFullList = document.getElementById('show-full-list').checked;
+  const searchQuery = document.getElementById('link-search').value.toLowerCase().trim();
   
   let links = [...window.linksData.items];
   
@@ -1164,6 +1167,14 @@ function filterLinks() {
   } else if (!showFollow && !showNofollow) {
     // If both are unchecked, show all (same as both checked)
   }
+  // Apply search filter if there's a query
+  if (searchQuery) {
+  links = links.filter(link => 
+    link.url.toLowerCase().includes(searchQuery) || 
+    link.anchor.toLowerCase().includes(searchQuery)
+  );
+}
+
   
   // Handle duplicates
   if (hideDuplicates) {
