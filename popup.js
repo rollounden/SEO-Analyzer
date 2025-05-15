@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('export-all').addEventListener('click', exportAllSeoData);
   document.getElementById('copy-business-info').addEventListener('click', copyBusinessInfo);
   document.getElementById('copy-map-code').addEventListener('click', copyMapCode);
+  document.getElementById('copy-meta-info').addEventListener('click', copyMetaInfo);
   
   // Set up link filter events
   document.getElementById('hide-duplicates').addEventListener('change', filterLinks);
@@ -763,10 +764,11 @@ function displayResults(results) {
   // Store the data globally for the copy function to use
   window.pageData = data;
   
-  // Overview tab
-  document.getElementById('title-length').textContent = `${data.title.length} characters | ${data.title}`;
-  document.getElementById('description-length').textContent = data.description ? 
-    `${data.description.length} characters` : 'Missing';
+// Overview tab
+document.getElementById('title-length').innerHTML = `<span class="char-count">${data.title.length} characters</span>${data.title}`;
+document.getElementById('description-length').innerHTML = data.description ? 
+  `<span class="char-count">${data.description.length} characters</span>${data.description}` : 
+  '<span class="missing">Missing</span>';
   
   // Create URL element with additional styling for better overflow handling
   const urlElement = document.getElementById('url');
@@ -787,7 +789,10 @@ function displayResults(results) {
   document.getElementById('robots').textContent = data.robots || 'Missing';
   document.getElementById('word-count').textContent = data.wordCount;
   document.getElementById('lang').textContent = data.lang;
-  document.getElementById('keywords').textContent = data.keywords || 'Missing';
+  document.getElementById('keywords').innerHTML = data.keywords ? 
+  `<span style="margin-right: 6px;"></span>${data.keywords}` : 
+  '<span class="missing">Missing</span>';
+
   
   // Headings tab
   for (let i = 1; i <= 6; i++) {
@@ -1640,4 +1645,32 @@ function copyLinks() {
       }
     });
   });
+}
+function copyMetaInfo() {
+  if (!window.pageData) {
+    alert('No page data available to copy');
+    return;
+  }
+
+  const data = window.pageData;
+  
+  let metaText = 'SEO META INFORMATION\n\n';
+  metaText += `Title: ${data.title}\n`;
+  metaText += `Title Length: ${data.title.length} characters\n\n`;
+  metaText += `Description: ${data.description || 'Missing'}\n`;
+  metaText += `Description Length: ${data.description ? data.description.length : 0} characters\n\n`;
+  metaText += `URL: ${data.url}\n`;
+  metaText += `Canonical URL: ${data.canonical || 'Missing'}\n`;
+  metaText += `Robots Directive: ${data.robots || 'Missing'}\n`;
+  metaText += `Lang: ${data.lang}\n`;
+  metaText += `Keywords: ${data.keywords || 'Missing'}\n`;
+  metaText += `Word Count: ${data.wordCount}\n`;
+  
+  navigator.clipboard.writeText(metaText)
+    .then(() => {
+      alert('Meta information copied to clipboard!');
+    })
+    .catch(err => {
+      console.error('Could not copy text: ', err);
+    });
 }
