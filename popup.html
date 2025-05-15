@@ -236,6 +236,73 @@
       background-color: #ff5722;
       color: white;
     }
+ /* Character count styling for title and description */
+.char-count {
+  display: inline-block;
+  background-color: #f0f2f5;
+  color: #545b64;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+/* Fix for description, title, and keywords to prevent word breaks */
+#description-length, #title-length, #keywords {
+  font-size: 13px;
+  word-break: normal;
+  word-wrap: normal;
+  max-width: 100%;
+  white-space: normal;
+  hyphens: none;
+}
+
+/* Fix for metric values spacing and alignment */
+.metric {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 14px;
+  padding: 5px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.metric-label {
+  font-weight: 500;
+  color: #555;
+  padding-right: 15px;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.metric-value {
+  color: #141c2a;
+  font-weight: 500;
+  word-break: normal;
+  word-wrap: break-word;
+  max-width: 75%;
+  text-align: right;
+  hyphens: none;
+}
+.secondary-button {
+  background-color: #3a4759;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+  margin-right: 10px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 2px 4px rgba(58, 71, 89, 0.2);
+}
+
+.secondary-button:hover {
+  background-color: #2c3e50;
+}
   </style>
   <script src="popup.js"></script>
 </head>
@@ -292,6 +359,7 @@
             <div class="metric-label">Keywords </div>
             <div class="metric-value" id="keywords">Loading...</div>
           </div>
+          <button id="copy-meta-info" class="secondary-button">Copy Meta Info</button>
           <button id="export-all">Export All SEO Data</button>
         </div>
       </div>
@@ -501,4 +569,5 @@
     </div>
   </div>
 </body>
+</html>
 </html>
