@@ -1,5 +1,4 @@
 # SEO Insights by Apex Marketing
-https://chromewebstore.google.com/detail/seo-page-analyzer-by-apex/kjgkligjaliafbgachlgfcfhnegcfmcm
 
 A Chrome extension that analyzes and displays key SEO metrics from any webpage, including meta tags, headings, links, images, social media tags, and local business information.
 
@@ -51,7 +50,7 @@ The extension features a modern, professional design with:
 
 ## Developed By
 
-This extension was developed by [Apex Marketing](https://apexmarketing.co.uk/seo-insights/), a digital transformation agency specializing in SEO, business automation, and digital solutions.
+This extension was developed by [Apex Marketing](https://apexmarketing.co.uk/seo-analyzer/), a digital transformation agency specializing in SEO, business automation, and digital solutions.
 
 ## License
 

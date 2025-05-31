@@ -303,6 +303,12 @@
 .secondary-button:hover {
   background-color: #2c3e50;
 }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
   </style>
   <script src="popup.js"></script>
 </head>
@@ -441,6 +447,10 @@
                 <span>Nofollow Links</span>
               </label>
               <label class="filter-option">
+                <input type="checkbox" id="hide-navigation"> 
+                <span>Hide Navigation Links</span>
+              </label>
+              <label class="filter-option">
                 <input type="checkbox" id="show-full-list" checked> 
                 <span>Show Full List</span>
               </label>
@@ -489,7 +499,10 @@
             <div class="metric-label">Schema Count</div>
             <div class="metric-value" id="schema-count">Loading...</div>
           </div>
-          <button id="copy-schema">Copy Schema JSON</button>
+          <div class="button-group">
+            <button id="copy-schema">Copy Schema JSON</button>
+            <button id="test-schema-rich-results" class="secondary-button">Test Rich Results</button>
+          </div>
           <div id="schema-list" style="margin-top: 15px; max-height: 300px; overflow-y: auto;"></div>
         </div>
       </div>
@@ -501,7 +514,10 @@
             <div class="metric-label">Total Hreflang Tags</div>
             <div class="metric-value" id="hreflang-count">Loading...</div>
           </div>
-          <button id="copy-hreflang">Copy Hreflang Data</button>
+          <div class="button-group">
+            <button id="copy-hreflang">Copy Hreflang Data</button>
+            <button id="test-hreflang-rich-results" class="secondary-button">Test Rich Results</button>
+          </div>
           <div id="hreflang-list" style="margin-top: 15px; max-height: 300px; overflow-y: auto;"></div>
         </div>
       </div>
@@ -572,6 +588,4 @@
     </div>
   </div>
 </body>
-</html>
-</html>
 </html>
